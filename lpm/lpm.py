@@ -3,6 +3,7 @@ from geopy.distance import geodesic
 
 from .utils import *
 
+
 class LPM:
     def __init__(self, kmz_obj, geo_key: str, weather_key: str) -> None:
         self.kmz_obj = kmz_obj
@@ -14,18 +15,23 @@ class LPM:
             user_coords = self._user_location(location)
         else:
             user_coords = location
+
         item = self.kmz_obj.coords_item(user_coords)
         edges, image = self.kmz_obj.load_images(item[1], single=True, neighbours=True)
         closest_unique_spots = self._find_pollution_coords(user_coords, edges, image)
-        for i, spot in enumerate(closest_unique_spots):
-            elevation = self.gmaps.elevation(spot)[0]['elevation']
-            weather = self.get_coords_weather(spot)
-            distance = geodesic(user_coords,spot).km
-            closest_unique_spots[i] = [spot, distance, elevation] + weather
-        scored = scalg.score_columns(closest_unique_spots, [1, 2, 4], [0, 1, 0])
-        return user_coords, sorted(scored, key = lambda x: x[-1])[-1]
 
-    def _find_pollution_coords(self, user_coords: list, edges: list, image: bytes) -> list:
+        for i, spot in enumerate(closest_unique_spots):
+            elevation = self.gmaps.elevation(spot)[0]["elevation"]
+            weather = self.get_coords_weather(spot)
+            distance = geodesic(user_coords, spot).km
+            closest_unique_spots[i] = [spot, distance, elevation] + weather
+
+        scored = scalg.score_columns(closest_unique_spots, [1, 2, 4], [0, 1, 0])
+        return user_coords, sorted(scored, key=lambda x: x[-1])[-1]
+
+    def _find_pollution_coords(
+        self, user_coords: list, edges: list, image: bytes
+    ) -> list:
         width, height = image.size
         pixelmap = image.load()
 

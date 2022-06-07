@@ -20,6 +20,7 @@ HI_P = COLORS[:4]
 MD_P = COLORS[4:9]
 LO_P = COLORS[9:]
 
+
 def match_color(rgb: list) -> tuple:
     r, g, b = rgb
     color_diffs = []
