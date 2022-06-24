@@ -2,11 +2,12 @@ import googlemaps, scalg
 from geopy.distance import geodesic
 
 from .utils import *
+from .kmz_processor import KMZ
 
 
 class LPM:
-    def __init__(self, kmz_obj, geo_key: str, weather_key: str) -> None:
-        self.kmz_obj = kmz_obj
+    def __init__(self, geo_key: str, weather_key: str) -> None:
+        self.kmz = KMZ()
         self.weather_key = weather_key
         self.gmaps = googlemaps.Client(key=geo_key)
 
@@ -16,15 +17,18 @@ class LPM:
         else:
             user_coords = location
 
-        item = self.kmz_obj.coords_item(user_coords)
-        edges, image = self.kmz_obj.load_images(item[1], single=True, neighbours=True)
+        item = self.kmz.coords_item(user_coords)
+        edges, image = self.kmz.load_images(item[1], single=True, neighbours=True)
         closest_unique_spots = self._find_pollution_coords(user_coords, edges, image)
 
         for i, spot in enumerate(closest_unique_spots):
             elevation = self.gmaps.elevation(spot)[0]["elevation"]
-            weather = self.get_coords_weather(spot)
+            weather = get_coords_weather(spot)
             distance = geodesic(user_coords, spot).km
             closest_unique_spots[i] = [spot, distance, elevation] + weather
+
+        if len(closest_unique_spots) == 1:
+            return user_coords, closest_unique_spots[0]
 
         scored = scalg.score_columns(closest_unique_spots, [1, 2, 4], [0, 1, 0])
         return user_coords, sorted(scored, key=lambda x: x[-1])[-1]
@@ -41,8 +45,7 @@ class LPM:
         ilev = 0
         cus = []  # closest_unique_spots
         indexed_colors = []
-        stopper = False
-        for i in range(1, len(COLORS) + 1):
+        for i in range(min(int(width/2), int(height/2))):
             ilev += 1
             layer = []
 
@@ -70,13 +73,12 @@ class LPM:
                 try:
                     color = match_color(pixelmap[px[0], px[1]])
                 except IndexError:
-                    stopper = False
                     break
-                if not color in indexed_colors and color in LO_P:
+                if not color in indexed_colors and color in COLORS:
                     cus.append(self._matrix_geo_coords(width, height, edges, px))
                     indexed_colors.append(color)
 
-            if stopper:
+            if len(cus) == len(COLORS):
                 break
 
         return cus
