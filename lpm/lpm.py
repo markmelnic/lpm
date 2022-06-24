@@ -14,7 +14,7 @@ class LPM:
     def get_pollution(self, location: str) -> list:
         if type(location) == str:
             user_coords = self._user_location(location)
-        else:
+        elif type(location) == list or type(location) == tuple:
             user_coords = location
 
         item = self.kmz.coords_item(user_coords)
