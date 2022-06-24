@@ -1,4 +1,5 @@
-import os, json, datetime, requests
+import os, json, requests
+from datetime import datetime as dt
 
 API_URL = "https://api.openweathermap.org/data/2.5/forecast?units=metric&lat={}&lon={}&appid={}"
 
@@ -6,11 +7,11 @@ API_URL = "https://api.openweathermap.org/data/2.5/forecast?units=metric&lat={}&
 def get_coords_weather(coords: tuple) -> list:
     req_url = API_URL.format(coords[0], coords[1], os.getenv("WEATHER_KEY"))
     response = json.loads(requests.get(req_url).content)
-    sunrise = datetime.fromtimestamp(response["city"]["sunrise"]).hour
-    sunset = datetime.fromtimestamp(response["city"]["sunset"]).hour
+    sunrise = dt.fromtimestamp(response["city"]["sunrise"]).hour
+    sunset = dt.fromtimestamp(response["city"]["sunset"]).hour
     data = []
     for item in response["list"]:
-        hour = datetime.fromtimestamp(item["dt"]).hour
+        hour = dt.fromtimestamp(item["dt"]).hour
         if hour > sunset + 1 or hour < sunrise - 1:
             time = item["dt_txt"]
             clouds = item["clouds"]["all"]
